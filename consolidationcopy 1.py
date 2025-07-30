@@ -10,15 +10,36 @@ Original file is located at
 import pandas as pd
 import itertools
 
-def load_data(path, sheet_name="HZ_Nov_Dec_2023_Output"):
+def load_data(path, sheet_name=None):
     """
-    Load Excel workbook, read columns rlength, rwidth, rheight, compute volume.
+    Load Excel or CSV file, read columns rlength, rwidth, rheight, compute volume.
     """
-    df = pd.read_excel(r"C:\Users\usyagl00\Downloads\CopyHZ_Nov_Dec_2023_Analysis.xlsx", sheet_name=sheet_name)
-    df = df[["rlength", "rwidth", "rheight"]].dropna()
-    df = df.astype({"rlength": float, "rwidth": float, "rheight": float})
-    df["volume"] = df["rlength"] * df["rwidth"] * df["rheight"]
-    return df
+    try:
+        # Check file extension
+        if path.endswith('.csv'):
+            df = pd.read_csv(path)
+        elif path.endswith(('.xlsx', '.xls')):
+            # If no sheet_name provided, use the first sheet
+            if sheet_name is None:
+                df = pd.read_excel(path)
+            else:
+                df = pd.read_excel(path, sheet_name=sheet_name)
+        else:
+            raise ValueError("Unsupported file format. Use .xlsx, .xls, or .csv")
+        
+        # Check if required columns exist
+        required_columns = ["rlength", "rwidth", "rheight"]
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+        
+        # Clean and process data
+        df = df[required_columns].dropna()
+        df = df.astype({"rlength": float, "rwidth": float, "rheight": float})
+        df["volume"] = df["rlength"] * df["rwidth"] * df["rheight"]
+        
+        return df
 
 def exclude_largest(df):
     """
